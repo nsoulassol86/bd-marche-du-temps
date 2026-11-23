@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Les Marchands du Temps Perdu</title>
+<style>
+  :root { --fond: #17130f; --barre: #221c16; --texte: #efe6d6; --doux: #a8998a; --accent: #d9a441;
+          --papier: #f6efe0; --encre: #2a2018; --barre-h: 52px; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { background: var(--fond); color: var(--texte); font-family: "Segoe UI", system-ui, sans-serif;
+         overflow: hidden; -webkit-tap-highlight-color: transparent; }
+  header { height: var(--barre-h); display: flex; align-items: center; gap: 10px; padding: 0 14px;
+           background: var(--barre); border-bottom: 1px solid #000; }
+  header h1 { font: 600 16px Georgia, "Times New Roman", serif; margin: 0; white-space: nowrap; overflow: hidden;
+              text-overflow: ellipsis; flex: 1 1 auto; min-width: 0; }
+  header h1 small { font: 400 13px "Segoe UI", system-ui, sans-serif; color: var(--doux); margin-left: 10px; }
+  #compteur { color: var(--doux); font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  button { font: inherit; color: var(--texte); background: #33291f; border: 1px solid #4a3c2e; border-radius: 6px;
+           padding: 6px 11px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+  button:hover { background: #40342a; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+  #scene { position: relative; height: calc(100% - var(--barre-h)); overflow: auto; display: flex; }
+  #vue { margin: auto; display: flex; padding: 14px; transition: opacity .16s ease, transform .16s ease; }
+  #vue.sort-g { opacity: 0; transform: translateX(-28px); }
+  #vue.sort-d { opacity: 0; transform: translateX(28px); }
+  .page { height: var(--h); aspect-ratio: 0.70696; background: var(--papier); flex: 0 0 auto;
+          box-shadow: 0 10px 34px rgba(0,0,0,.6); }
+  .page img { width: 100%; height: 100%; display: block; }
+  .page.vide { background: transparent; box-shadow: none; }
+  .double .page:first-child:not(.vide) { box-shadow: -6px 10px 30px rgba(0,0,0,.55); }
+  .double .page:last-child:not(.vide) { box-shadow: 6px 10px 30px rgba(0,0,0,.55); }
+  .couverture { color: var(--encre); display: flex; flex-direction: column; align-items: center; justify-content: center;
+                text-align: center; padding: 8%; background: linear-gradient(160deg, #f8f1e2, #e9dcc3); }
+  .couverture .t { font: 700 calc(var(--h) * .058) Georgia, "Times New Roman", serif; line-height: 1.15; letter-spacing: .01em; }
+  .couverture .filet { width: 34%; height: 2px; background: var(--encre); margin: calc(var(--h) * .035) 0; opacity: .55; }
+  .couverture .s { font: 400 calc(var(--h) * .026) Georgia, serif; }
+  .couverture .c { font: 400 calc(var(--h) * .022) Georgia, serif; margin-top: calc(var(--h) * .09); letter-spacing: .18em;
+                   text-transform: uppercase; opacity: .75; }
+  .couverture .aide { font: 400 calc(var(--h) * .017) "Segoe UI", system-ui, sans-serif; margin-top: calc(var(--h) * .12); opacity: .6; }
+  .fleche { position: absolute; top: 0; bottom: 0; width: 16%; min-width: 54px; border: 0; border-radius: 0; padding: 0;
+            background: transparent; color: var(--texte); font-size: 44px; opacity: 0; transition: opacity .15s; }
+  .fleche:hover, .fleche:focus-visible { opacity: .9; background: linear-gradient(90deg, rgba(0,0,0,.35), transparent); }
+  #suiv.fleche:hover, #suiv.fleche:focus-visible { background: linear-gradient(270deg, rgba(0,0,0,.35), transparent); }
+  #prec { left: 0; } #suiv { right: 0; }
+  .fleche[disabled] { display: none; }
+  body.largeur .fleche { position: fixed; top: var(--barre-h); }
+  #vignettes { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(20,16,12,.96); border-top: 1px solid #000;
+               display: none; gap: 10px; padding: 12px 14px; overflow-x: auto; }
+  #vignettes.ouvert { display: flex; }
+  #vignettes button { padding: 0; border: 2px solid transparent; background: none; flex: 0 0 auto; border-radius: 3px; }
+  #vignettes button.ici { border-color: var(--accent); }
+  #vignettes img, #vignettes .mini { height: 132px; aspect-ratio: 0.70696; display: block; background: var(--papier); }
+  #vignettes .mini { color: var(--encre); font: 600 11px Georgia, serif; display: flex; align-items: center;
+                     justify-content: center; text-align: center; padding: 6px; }
+  #vignettes span { display: block; color: var(--doux); font-size: 11px; padding: 3px 0 1px; }
+  #message { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); background: #000c; color: var(--texte);
+             padding: 8px 14px; border-radius: 20px; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  #message.vu { opacity: 1; }
+  @media (max-width: 720px) {
+    header h1 small, #b-double, #b-ecran { display: none; }
+    header { gap: 6px; padding: 0 8px; }
+    #vue { padding: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { #vue { transition: none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Les Marchands du Temps Perdu<small>Chapitre 1</small></h1>
+  <span id="compteur" aria-live="polite"></span>
+  <button id="b-double" aria-pressed="false" title="Touche D">Double page</button>
+  <button id="b-largeur" aria-pressed="false" title="Touche Z">Agrandir</button>
+  <button id="b-vignettes" aria-pressed="false" title="Touche V">Pages</button>
+  <button id="b-ecran" title="Touche F">Plein écran</button>
+</header>
+<main id="scene">
+  <div id="vue"></div>
+  <button class="fleche" id="prec" aria-label="Page précédente">‹</button>
+  <button class="fleche" id="suiv" aria-label="Page suivante">›</button>
+</main>
+<nav id="vignettes" aria-label="Toutes les pages"></nav>
+<div id="message" role="status"></div>
+<script>
+const PAGES = [{"n": 1, "src": "pages/p01.jpg"}, {"n": 2, "src": "pages/p02.jpg"}, {"n": 3, "src": "pages/p03.jpg"}, {"n": 4, "src": "pages/p04.jpg"}, {"n": 5, "src": "pages/p05.jpg"}, {"n": 6, "src": "pages/p06.jpg"}, {"n": 7, "src": "pages/p07.jpg"}, {"n": 8, "src": "pages/p08.jpg"}];                      // [{n: 1, src: "pages/p01.jpg"}, ...]
+const N = PAGES.length, RATIO = 0.70696; // largeur / hauteur d'une planche
+const $ = id => document.getElementById(id);
+const vue = $("vue"), scene = $("scene");
+let p = 0, double = false, largeur = false;   // p = 0 : couverture ; 1..N : pages
+
+function lire(cle, defaut) { try { const v = localStorage.getItem("liseuse." + cle); return v === null ? defaut : JSON.parse(v); } catch (e) { return defaut; } }
+function ecrire(cle, v) { try { localStorage.setItem("liseuse." + cle, JSON.stringify(v)); } catch (e) {} }
+
+function couverture() {
+  const d = document.createElement("div");
+  d.className = "page couverture";
+  d.innerHTML = '<div class="t">Les Marchands du Temps Perdu</div><div class="filet"></div><div class="s">Volume 1 · Le Marché des Instants</div>' +
+                '<div class="c">Chapitre 1</div><div class="aide">→ pour commencer la lecture</div>';
+  return d;
+}
+function page(n) {
+  const d = document.createElement("div");
+  if (n < 1 || n > N) { d.className = "page vide"; return d; }
+  d.className = "page";
+  const im = new Image();
+  im.src = PAGES[n - 1].src; im.alt = "Page " + n; im.draggable = false;
+  d.appendChild(im);
+  return d;
+}
+// En double page, comme dans un album : la page 1 est seule à droite, puis 2-3, 4-5...
+function gauche(n) { return n <= 1 ? n : n - (n % 2); }
+function contenu() {
+  if (p === 0) return [couverture()];
+  if (!double) return [page(p)];
+  const g = gauche(p);
+  return g === 1 ? [page(0), page(1)] : [page(g), page(g + 1)];
+}
+function taille() {
+  const cols = (double && p > 0) ? 2 : 1, marge = innerWidth <= 720 ? 0 : 28;
+  const W = scene.clientWidth - marge, H = scene.clientHeight - marge;
+  let h = Math.min(H, W / cols / RATIO);
+  if (largeur) h = Math.min(W, 1250 * cols) / cols / RATIO;
+  vue.style.setProperty("--h", Math.floor(h) + "px");
+}
+function afficher(sens) {
+  const poser = () => {
+    vue.className = (double && p > 0) ? "double" : "";
+    vue.replaceChildren(...contenu());
+    taille(); scene.scrollTop = 0;
+    let texte = "Couverture";
+    if (p > 0) { const g = gauche(p); texte = (double && g > 1 && g + 1 <= N) ? "Pages " + g + "-" + (g + 1) + " / " + N : "Page " + p + " / " + N; }
+    $("compteur").textContent = texte;
+    $("prec").disabled = p === 0; $("suiv").disabled = dernier();
+    document.querySelectorAll("#vignettes button").forEach(b => b.classList.toggle("ici", +b.dataset.p === p || (double && p > 1 && +b.dataset.p === gauche(p) + 1)));
+    [p + 1, p + 2, p + 3].forEach(n => { if (n <= N) new Image().src = PAGES[n - 1].src; });   // charge la suite d'avance
+    ecrire("page", p);
+  };
+  if (!sens) return poser();
+  vue.classList.add(sens > 0 ? "sort-g" : "sort-d");
+  setTimeout(() => { poser(); vue.classList.add(sens > 0 ? "sort-d" : "sort-g"); requestAnimationFrame(() => requestAnimationFrame(() => vue.classList.remove("sort-g", "sort-d"))); }, 150);
+}
+function dernier() {
+  if (!double) return p >= N;
+  if (p === 0) return N < 1;
+  if (p === 1) return N < 2;
+  return gauche(p) + 2 > N;
+}
+function aller(n, sens) { p = Math.max(0, Math.min(N, n)); if (double && p > 1) p = gauche(p); afficher(sens); }
+function suivante() {
+  if (dernier()) return dire("Dernière page pour l'instant.");
+  aller(!double || p < 2 ? p + 1 : p + 2, 1);
+}
+function precedente() { if (p > 0) aller(!double || p <= 2 ? p - 1 : p - 2, -1); }
+let minuterie;
+function dire(t) { const m = $("message"); m.textContent = t; m.classList.add("vu"); clearTimeout(minuterie); minuterie = setTimeout(() => m.classList.remove("vu"), 1800); }
+
+function basculer(quoi) {
+  if (quoi === "double") { double = !double; ecrire("double", double); $("b-double").setAttribute("aria-pressed", double); aller(p); }
+  if (quoi === "largeur") { largeur = !largeur; ecrire("largeur", largeur); $("b-largeur").setAttribute("aria-pressed", largeur);
+                            document.body.classList.toggle("largeur", largeur); afficher(); }
+  if (quoi === "vignettes") { const o = $("vignettes").classList.toggle("ouvert"); $("b-vignettes").setAttribute("aria-pressed", o); }
+  if (quoi === "ecran") { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => dire("Plein écran indisponible ici.")); }
+}
+$("b-double").onclick = () => basculer("double");
+$("b-largeur").onclick = () => basculer("largeur");
+$("b-vignettes").onclick = () => basculer("vignettes");
+$("b-ecran").onclick = () => basculer("ecran");
+$("prec").onclick = precedente; $("suiv").onclick = suivante;
+addEventListener("resize", taille);
+addEventListener("keydown", e => {
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
+  const k = e.key;
+  if (k === "ArrowRight" || k === "PageDown" || (k === " " && !largeur)) { e.preventDefault(); suivante(); }
+  else if (k === "ArrowLeft" || k === "PageUp") { e.preventDefault(); precedente(); }
+  else if (k === "Home") aller(0, -1);
+  else if (k === "End") aller(N, 1);
+  else if (k === "d" || k === "D") basculer("double");
+  else if (k === "z" || k === "Z") basculer("largeur");
+  else if (k === "v" || k === "V") basculer("vignettes");
+  else if (k === "f" || k === "F") basculer("ecran");
+  else if (k === "Escape") { $("vignettes").classList.remove("ouvert"); $("b-vignettes").setAttribute("aria-pressed", false); }
+});
+// Tactile : glisser le doigt vers la gauche pour avancer
+let x0 = null, y0 = null;
+scene.addEventListener("touchstart", e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, {passive: true});
+scene.addEventListener("touchend", e => {
+  if (x0 === null) return;
+  const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > 1.5 * Math.abs(dy)) (dx < 0 ? suivante : precedente)();
+}, {passive: true});
+
+// Bandeau des vignettes
+const nav = $("vignettes");
+[0].concat(PAGES.map(q => q.n)).forEach(n => {
+  const b = document.createElement("button");
+  b.dataset.p = n;
+  b.innerHTML = (n === 0 ? '<div class="mini">Les Marchands du Temps Perdu</div>' : '<img loading="lazy" alt="" src="' + PAGES[n - 1].src + '">') +
+                "<span>" + (n === 0 ? "Couverture" : "Page " + n) + "</span>";
+  b.onclick = () => { aller(n); basculer("vignettes"); };
+  nav.appendChild(b);
+});
+
+double = lire("double", false) && innerWidth > 720; largeur = lire("largeur", false);
+$("b-double").setAttribute("aria-pressed", double); $("b-largeur").setAttribute("aria-pressed", largeur);
+document.body.classList.toggle("largeur", largeur);
+// Lien direct : index.html#3 ouvre la page 3, index.html#3d l'ouvre en double page
+const lien = location.hash.match(/^#(\d+)(d?)$/);
+if (lien && lien[2]) { double = true; $("b-double").setAttribute("aria-pressed", true); }
+aller(Math.min(lien ? +lien[1] : lire("page", 0), N));
+</script>
+</body>
+</html>
